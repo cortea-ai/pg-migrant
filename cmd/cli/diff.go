@@ -17,7 +17,7 @@ import (
 	"github.com/stripe/pg-schema-diff/pkg/tempdb"
 )
 
-func Diff(ctx context.Context, conf *config.Config) error {
+func Diff(ctx context.Context, conf *config.Config, migrate bool) error {
 	if len(conf.GetSchemaFiles()) == 0 {
 		return errors.New("no schema files provided")
 	}
@@ -79,6 +79,7 @@ func Diff(ctx context.Context, conf *config.Config) error {
 		println("schema matches expected. No plan generated")
 		return nil
 	}
+
 	println(diffutils.PlanToPrettyS(plan))
 	files, err := os.ReadDir(conf.GetMigrationDir())
 	if err != nil {
@@ -110,14 +111,24 @@ func Diff(ctx context.Context, conf *config.Config) error {
 		}
 		newVersionStr = fmt.Sprintf("%04d", newVersion+1)
 	}
-	newFilePath := filepath.Join(conf.GetMigrationDir(), fmt.Sprintf("%s.sql", newVersionStr))
 
+	if migrate {
+		if err := promptForApproval(); err != nil {
+			return err
+		}
+		if err := conn.ApplyMigration(ctx, newVersionStr, diffutils.PlanToPrettyS(plan)); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	newFilePath := filepath.Join(conf.GetMigrationDir(), fmt.Sprintf("%s.sql", newVersionStr))
 	err = os.WriteFile(newFilePath, []byte(diffutils.PlanToPrettyS(plan)), 0644)
 	if err != nil {
 		return fmt.Errorf("writing migration file: %w", err)
 	}
 
-	println("\n✅ Created new migration file: %s\n", newFilePath)
+	fmt.Printf("\n✅ Created new migration file: %s\n", newFilePath)
 
 	return nil
 }

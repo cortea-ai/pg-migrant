@@ -170,10 +170,6 @@ var getEnvFunc = function.New(&function.Spec{
 	},
 	Type: function.StaticReturnType(cty.String),
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
-		val, ok := os.LookupEnv(args[0].AsString())
-		if !ok {
-			return cty.StringVal(""), fmt.Errorf("environment variable %q not found", args[0].AsString())
-		}
-		return cty.StringVal(val), nil
+		return cty.StringVal(os.Getenv(args[0].AsString())), nil
 	},
 })

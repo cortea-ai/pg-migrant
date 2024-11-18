@@ -82,6 +82,9 @@ func currentVersionCmd() *cobra.Command {
 }
 
 func diffCmd() *cobra.Command {
+	var (
+		migrate = "migrate"
+	)
 	cmd := &cobra.Command{
 		Use:   "diff",
 		Short: "Diff the current schema against the db",
@@ -90,10 +93,15 @@ func diffCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return cli.Diff(cmd.Context(), conf)
+			migrate, err := cmd.Flags().GetBool(migrate)
+			if err != nil {
+				return err
+			}
+			return cli.Diff(cmd.Context(), conf, migrate)
 		},
 	}
 	addGlobalFlags(cmd.PersistentFlags())
+	cmd.Flags().Bool(migrate, false, "Run diffed migrations on the fly")
 	return cmd
 }
 

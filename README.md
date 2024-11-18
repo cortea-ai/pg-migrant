@@ -7,7 +7,7 @@ Usage:
   pg-migrant [command]
 
 Available Commands:
-  check              Check need for rebasing and no gaps in version numbering
+  check              Check need for rebasing and no gaps in version numbering. Requires GITHUB_TOKEN to be set.
   completion         Generate the autocompletion script for the specified shell
   current-version    Get the current migration version of the db
   diff               Diff the current schema against the db
