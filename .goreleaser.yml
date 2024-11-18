@@ -41,4 +41,15 @@ changelog:
       - '^docs:'
       - '^test:'
       - '^ci:'
-      - '^chore:' 
+      - '^chore:'
+
+release:
+  github:
+    owner: cortea-ai
+    name: pg-migrant
+  draft: false
+  prerelease: auto
+  mode: replace
+  header: |
+    ## Release Notes
+    For full details, see the [changelog](CHANGELOG.md).
