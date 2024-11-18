@@ -32,8 +32,8 @@ type Env struct {
 	DBUrl          string       `hcl:"db_url"`
 	MigrationDir   string       `hcl:"migration_dir,optional" default:"./migrations"`
 	SchemaFiles    []string     `hcl:"schema_files"`
-	GitHubConfig   GitHubConfig `hcl:"github_config"`
-	ExcludeSchemas []string     `hcl:"exclude_schemas"`
+	GitHubConfig   GitHubConfig `hcl:"github_config,optional"`
+	ExcludeSchemas []string     `hcl:"exclude_schemas,optional"`
 }
 
 type Config struct {
@@ -80,8 +80,7 @@ func GetConfig(filePath string, env string, vars Vars) (*Config, error) {
 			return nil, fmt.Errorf("failed to parse attributes of variable '%s': %w", varName, diags)
 		}
 		if val, ok := vars[varName]; ok {
-			variables[varName] = cty.StringVal(val)
-			continue
+			variables[varName] = cty.StringVal(val) // only strings are supported for now
 		}
 		defaultAttr, ok := attrs["default"]
 		if !ok {
@@ -97,7 +96,7 @@ func GetConfig(filePath string, env string, vars Vars) (*Config, error) {
 
 	// Collect locals
 	if len(content.Blocks.OfType("locals")) > 0 {
-		block := content.Blocks.OfType("locals")[0]
+		block := content.Blocks.OfType("locals")[0] // only one block is allowed
 		attrs, diags := block.Body.JustAttributes()
 		if diags.HasErrors() {
 			return nil, fmt.Errorf("failed to parse locals block: %w", diags)
