@@ -68,7 +68,7 @@ func Diff(ctx context.Context, conf *config.Config) error {
 
 	plan, err := diff.Generate(ctx, conn, schemaSource,
 		diff.WithDataPackNewTables(),
-		diff.WithExcludeSchemas(db.PGMigrantSchema),
+		diff.WithExcludeSchemas(append(conf.GetExcludeSchemas(), db.PGMigrantSchema)...),
 		diff.WithTempDbFactory(tempDbFactory),
 	)
 	if err != nil {
@@ -116,6 +116,7 @@ func Diff(ctx context.Context, conf *config.Config) error {
 	if err != nil {
 		return fmt.Errorf("writing migration file: %w", err)
 	}
+
 	println("\n✅ Created new migration file: %s\n", newFilePath)
 
 	return nil

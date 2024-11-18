@@ -2,12 +2,14 @@ package config
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclparse"
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/jackc/pgx/v4"
 	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/function"
 )
 
 type Variable struct {
@@ -26,11 +28,12 @@ type GitHubConfig struct {
 }
 
 type Env struct {
-	Name         string       `hcl:"name,label"`
-	DBUrl        string       `hcl:"db_url"`
-	MigrationDir string       `hcl:"migration_dir,optional" default:"./migrations"`
-	SchemaFiles  []string     `hcl:"schema_files"`
-	GitHubConfig GitHubConfig `hcl:"github_config"`
+	Name           string       `hcl:"name,label"`
+	DBUrl          string       `hcl:"db_url"`
+	MigrationDir   string       `hcl:"migration_dir,optional" default:"./migrations"`
+	SchemaFiles    []string     `hcl:"schema_files"`
+	GitHubConfig   GitHubConfig `hcl:"github_config"`
+	ExcludeSchemas []string     `hcl:"exclude_schemas"`
 }
 
 type Config struct {
@@ -50,6 +53,9 @@ func GetConfig(filePath string, env string, vars Vars) (*Config, error) {
 	}
 	variables := make(map[string]cty.Value)
 	evalCtx := &hcl.EvalContext{
+		Functions: map[string]function.Function{
+			"getenv": getEnvFunc,
+		},
 		Variables: map[string]cty.Value{
 			"var": cty.ObjectVal(variables),
 		},
@@ -150,3 +156,24 @@ func (conf *Config) GetSchemaFiles() []string {
 func (conf *Config) GetGitHubConfig() GitHubConfig {
 	return conf.SelectedEnv.GitHubConfig
 }
+
+func (conf *Config) GetExcludeSchemas() []string {
+	return conf.SelectedEnv.ExcludeSchemas
+}
+
+var getEnvFunc = function.New(&function.Spec{
+	Params: []function.Parameter{
+		{
+			Name: "key",
+			Type: cty.String,
+		},
+	},
+	Type: function.StaticReturnType(cty.String),
+	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
+		val, ok := os.LookupEnv(args[0].AsString())
+		if !ok {
+			return cty.StringVal(""), fmt.Errorf("environment variable %q not found", args[0].AsString())
+		}
+		return cty.StringVal(val), nil
+	},
+})

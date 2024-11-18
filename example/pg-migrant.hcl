@@ -33,6 +33,11 @@ env "dev" {
   migration_dir = "example/migrations"
   db_url = "postgres://${var.postgres_user}:${var.postgres_password}@${var.postgres_host}:${var.postgres_port}/${var.postgres_dbname}?search_path=public&sslmode=disable"
   github_config = local.github_config
+  exclude_schemas = ["custom"]
+}
+
+variable "postgres_password" {
+  default = getenv("POSTGRES_PASSWORD")
 }
 
 env "prod" {
@@ -40,4 +45,5 @@ env "prod" {
   migration_dir = "example/migrations"
   db_url = "postgres://${var.postgres_user}:${var.postgres_password}@${var.postgres_host}:${var.postgres_port}/${var.postgres_dbname}?search_path=public&sslmode=disable"
   github_config = local.github_config
+  exclude_schemas = ["custom"]
 }
