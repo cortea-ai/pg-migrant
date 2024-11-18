@@ -17,3 +17,5 @@ CREATE UNIQUE INDEX CONCURRENTLY users_pkey ON public.users USING btree (id);
 -- END STATEMENT --
 
 ALTER TABLE "public"."users" ADD CONSTRAINT "users_pkey" PRIMARY KEY USING INDEX "users_pkey";
+
+

@@ -19,12 +19,18 @@ type Locals struct {
 	Values map[string]cty.Value `hcl:",remain"`
 }
 
+type GitHubConfig struct {
+	Owner        string `hcl:"owner" cty:"owner"`
+	Repo         string `hcl:"repo" cty:"repo"`
+	TargetBranch string `hcl:"target_branch" cty:"target_branch"`
+}
+
 type Env struct {
-	Name         string   `hcl:"name,label"`
-	DBUrl        string   `hcl:"db_url"`
-	MigrationDir string   `hcl:"migration_dir,optional" default:"./migrations"`
-	SchemaFiles  []string `hcl:"schema_files"`
-	GitRepo      string   `hcl:"git_repo"`
+	Name         string       `hcl:"name,label"`
+	DBUrl        string       `hcl:"db_url"`
+	MigrationDir string       `hcl:"migration_dir,optional" default:"./migrations"`
+	SchemaFiles  []string     `hcl:"schema_files"`
+	GitHubConfig GitHubConfig `hcl:"github_config"`
 }
 
 type Config struct {
@@ -141,6 +147,6 @@ func (conf *Config) GetSchemaFiles() []string {
 	return conf.SelectedEnv.SchemaFiles
 }
 
-func (conf *Config) GetGitRepo() string {
-	return conf.SelectedEnv.GitRepo
+func (conf *Config) GetGitHubConfig() GitHubConfig {
+	return conf.SelectedEnv.GitHubConfig
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -31,7 +32,7 @@ func init() {
 	rootCmd.AddCommand(diffCmd())
 	rootCmd.AddCommand(migrateCmd())
 	rootCmd.AddCommand(pendingMigrationsCmd())
-	rootCmd.AddCommand(rebaseCmd())
+	rootCmd.AddCommand(checkCmd())
 	rootCmd.AddCommand(squashCmd())
 }
 
@@ -142,16 +143,20 @@ func pendingMigrationsCmd() *cobra.Command {
 	return cmd
 }
 
-func rebaseCmd() *cobra.Command {
+func checkCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "rebase",
-		Short: "Rebase migrations on top of the latest migration",
+		Use:   "check",
+		Short: "Check need for rebasing and no gaps in version numbering. Requires GITHUB_TOKEN to be set.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			conf, err := config.GetConfig(configPath, env, vars)
 			if err != nil {
 				return err
 			}
-			return cli.Rebase(cmd.Context(), conf)
+			token, ok := os.LookupEnv("GITHUB_TOKEN")
+			if !ok {
+				return fmt.Errorf("GITHUB_TOKEN is not set")
+			}
+			return cli.Check(cmd.Context(), conf, token)
 		},
 	}
 	addGlobalFlags(cmd.PersistentFlags())

@@ -116,7 +116,7 @@ func Diff(ctx context.Context, conf *config.Config) error {
 	if err != nil {
 		return fmt.Errorf("writing migration file: %w", err)
 	}
-	fmt.Printf("\n✅ Created new migration file: %s\n", newFilePath)
+	println("\n✅ Created new migration file: %s\n", newFilePath)
 
 	return nil
 }
