@@ -39,6 +39,7 @@ func PlanToPrettyS(plan diff.Plan) string {
 
 	var stmtStrs []string
 	for _, stmt := range plan.Statements {
+		stmt = adaptStatement(stmt)
 		stmtStr := statementToPrettyS(stmt)
 		stmtStrs = append(stmtStrs, stmtStr)
 	}
@@ -48,21 +49,20 @@ func PlanToPrettyS(plan diff.Plan) string {
 	return sb.String()
 }
 
-func statementToPrettyS(stmt diff.Statement) string {
-	sb := strings.Builder{}
-	concurrentIndex := false
+func adaptStatement(stmt diff.Statement) diff.Statement {
 	for _, prefix := range []string{"CREATE INDEX", "CREATE UNIQUE INDEX"} {
 		concurrentPrefix := prefix + " CONCURRENTLY"
 		if strings.HasPrefix(stmt.DDL, concurrentPrefix) {
 			stmt.DDL = strings.Replace(stmt.DDL, concurrentPrefix, prefix, 1)
-			concurrentIndex = true
 			break
 		}
 	}
+	return stmt
+}
+
+func statementToPrettyS(stmt diff.Statement) string {
+	sb := strings.Builder{}
 	sb.WriteString(fmt.Sprintf("%s;", stmt.DDL))
-	if concurrentIndex {
-		sb.WriteString("\n-- [NOTE]: It's preferable to create indexes CONCURRENTLY, avoiding for now as it cannot run in a transaction.")
-	}
 	if len(stmt.Hazards) > 0 {
 		for _, hazard := range stmt.Hazards {
 			sb.WriteString(fmt.Sprintf("\n-- [HAZARD]: %s", hazardToPrettyS(hazard)))

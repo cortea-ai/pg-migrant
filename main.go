@@ -30,7 +30,7 @@ func init() {
 	rootCmd.SetOut(os.Stdout)
 	rootCmd.AddCommand(currentVersionCmd())
 	rootCmd.AddCommand(diffCmd())
-	rootCmd.AddCommand(migrateCmd())
+	rootCmd.AddCommand(applyCmd())
 	rootCmd.AddCommand(pendingMigrationsCmd())
 	rootCmd.AddCommand(checkCmd())
 	rootCmd.AddCommand(squashCmd())
@@ -105,13 +105,13 @@ func diffCmd() *cobra.Command {
 	return cmd
 }
 
-func migrateCmd() *cobra.Command {
+func applyCmd() *cobra.Command {
 	var (
 		autoApprove = "auto-approve"
 		dryRun      = "dry-run"
 	)
 	cmd := &cobra.Command{
-		Use:   "migrate",
+		Use:   "apply",
 		Short: "Apply pending migrations",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			conf, err := config.GetConfig(configPath, env, vars)
@@ -126,7 +126,7 @@ func migrateCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return cli.Migrate(cmd.Context(), conf, autoApprove, dryRun)
+			return cli.Apply(cmd.Context(), conf, autoApprove, dryRun)
 		},
 	}
 	addGlobalFlags(cmd.PersistentFlags())

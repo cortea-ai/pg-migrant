@@ -9,7 +9,7 @@ import (
 	"github.com/cortea-ai/pg-migrant/internal/db"
 )
 
-func Migrate(ctx context.Context, conf *config.Config, autoApprove, dryRun bool) error {
+func Apply(ctx context.Context, conf *config.Config, autoApprove, dryRun bool) error {
 	conn, err := db.NewConn(ctx, conf.GetDBUrl())
 	if err != nil {
 		return err
