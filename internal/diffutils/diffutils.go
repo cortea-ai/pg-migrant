@@ -51,9 +51,13 @@ func PlanToPrettyS(plan diff.Plan) string {
 func statementToPrettyS(stmt diff.Statement) string {
 	sb := strings.Builder{}
 	concurrentIndex := false
-	if strings.HasPrefix(stmt.DDL, "CREATE UNIQUE INDEX CONCURRENTLY") {
-		stmt.DDL = strings.Replace(stmt.DDL, "CREATE UNIQUE INDEX CONCURRENTLY", "CREATE UNIQUE INDEX", 1)
-		concurrentIndex = true
+	for _, prefix := range []string{"CREATE INDEX", "CREATE UNIQUE INDEX"} {
+		concurrentPrefix := prefix + " CONCURRENTLY"
+		if strings.HasPrefix(stmt.DDL, concurrentPrefix) {
+			stmt.DDL = strings.Replace(stmt.DDL, concurrentPrefix, prefix, 1)
+			concurrentIndex = true
+			break
+		}
 	}
 	sb.WriteString(fmt.Sprintf("%s;", stmt.DDL))
 	if concurrentIndex {
