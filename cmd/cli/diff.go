@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -80,14 +81,15 @@ func Diff(ctx context.Context, conf *config.Config, migrate bool) error {
 		return nil
 	}
 
-	println(diffutils.PlanToPrettyS(plan))
 	files, err := os.ReadDir(conf.GetMigrationDir())
 	if err != nil {
 		return fmt.Errorf("reading migration directory: %w", err)
 	}
 
 	var maxVersion string
+	var lastFile fs.DirEntry
 	for _, file := range files {
+		lastFile = file
 		if file.IsDir() {
 			continue
 		}
@@ -103,6 +105,21 @@ func Diff(ctx context.Context, conf *config.Config, migrate bool) error {
 			maxVersion = version
 		}
 	}
+
+	if lastFile != nil {
+		lastFilePath := filepath.Join(conf.GetMigrationDir(), lastFile.Name())
+		lastContent, err := os.ReadFile(lastFilePath)
+		if err != nil {
+			return fmt.Errorf("reading last migration file: %w", err)
+		}
+		if string(lastContent) == diffutils.PlanToPrettyS(plan) {
+			println("No changes detected - migration content matches last file")
+			return nil
+		}
+	}
+
+	println(diffutils.PlanToPrettyS(plan))
+
 	newVersionStr := "0000"
 	if maxVersion != "" {
 		newVersion, err := strconv.Atoi(maxVersion)
@@ -113,7 +130,7 @@ func Diff(ctx context.Context, conf *config.Config, migrate bool) error {
 	}
 
 	if migrate {
-		if err := promptForApproval(); err != nil {
+		if err := promptForApproval("Apply this migration?"); err != nil {
 			return err
 		}
 		if err := conn.ApplyMigration(ctx, newVersionStr, diffutils.PlanToPrettyS(plan)); err != nil {
@@ -123,6 +140,9 @@ func Diff(ctx context.Context, conf *config.Config, migrate bool) error {
 	}
 
 	newFilePath := filepath.Join(conf.GetMigrationDir(), fmt.Sprintf("%s.sql", newVersionStr))
+	if err := promptForApproval("Create new migration file?"); err != nil {
+		return err
+	}
 	err = os.WriteFile(newFilePath, []byte(diffutils.PlanToPrettyS(plan)), 0644)
 	if err != nil {
 		return fmt.Errorf("writing migration file: %w", err)

@@ -41,7 +41,7 @@ func Migrate(ctx context.Context, conf *config.Config, autoApprove, dryRun bool)
 		println("---\n")
 		if !dryRun {
 			if !autoApprove {
-				if err := promptForApproval(); err != nil {
+				if err := promptForApproval("Apply this migration?"); err != nil {
 					return err
 				}
 			}
@@ -53,8 +53,8 @@ func Migrate(ctx context.Context, conf *config.Config, autoApprove, dryRun bool)
 	return nil
 }
 
-func promptForApproval() error {
-	print("Apply this migration? [y/N]: ")
+func promptForApproval(msg string) error {
+	print(msg + " [y/N]: ")
 	var response string
 	if _, err := fmt.Scanln(&response); err != nil {
 		return err
