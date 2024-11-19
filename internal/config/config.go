@@ -81,6 +81,7 @@ func GetConfig(filePath string, env string, vars Vars) (*Config, error) {
 		}
 		if val, ok := vars[varName]; ok {
 			variables[varName] = cty.StringVal(val) // only strings are supported for now
+			continue
 		}
 		defaultAttr, ok := attrs["default"]
 		if !ok {
