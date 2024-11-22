@@ -154,7 +154,7 @@ func pendingMigrationsCmd() *cobra.Command {
 func checkCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "check",
-		Short: "Check need for rebasing and no gaps in version numbering. Requires GITHUB_TOKEN to be set.",
+		Short: "Check need for rebasing and no gaps in version numbering. Requires GITHUB_TOKEN.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			conf, err := config.GetConfig(configPath, env, vars)
 			if err != nil {
@@ -174,13 +174,17 @@ func checkCmd() *cobra.Command {
 func squashCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "squash",
-		Short: "Squash pending migrations into a single migration",
+		Short: "Squash pending migrations into a single migration. Requires GITHUB_TOKEN.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			conf, err := config.GetConfig(configPath, env, vars)
 			if err != nil {
 				return err
 			}
-			return cli.Squash(cmd.Context(), conf)
+			token, ok := os.LookupEnv("GITHUB_TOKEN")
+			if !ok {
+				return fmt.Errorf("GITHUB_TOKEN is not set")
+			}
+			return cli.Squash(cmd.Context(), conf, token)
 		},
 	}
 	addGlobalFlags(cmd.PersistentFlags())

@@ -6,19 +6,36 @@ import (
 	"path/filepath"
 
 	"github.com/cortea-ai/pg-migrant/internal/config"
-	"github.com/cortea-ai/pg-migrant/internal/db"
+	"github.com/google/go-github/github"
+	"golang.org/x/oauth2"
 )
 
-func Squash(ctx context.Context, conf *config.Config) error {
-	conn, err := db.NewConn(ctx, conf.GetDBUrl())
+func Squash(ctx context.Context, conf *config.Config, token string) error {
+	tc := oauth2.NewClient(ctx, oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: token},
+	))
+
+	ghClient := github.NewClient(tc)
+
+	_, migrations, _, err := ghClient.Repositories.GetContents(
+		ctx,
+		conf.GetGitHubConfig().Owner,
+		conf.GetGitHubConfig().Repo,
+		conf.GetMigrationDir(),
+		nil,
+	)
 	if err != nil {
 		return err
 	}
-	defer conn.Close(ctx)
 
-	currentVersion, err := conn.CheckCurrentVersion(ctx)
-	if err != nil {
-		return err
+	// Get latest version from remote migrations
+	var currentVersion string
+	if len(migrations) > 0 {
+		lastMigration := migrations[len(migrations)-1]
+		currentVersion, err = VersionFromFilename(lastMigration.GetName())
+		if err != nil {
+			return err
+		}
 	}
 
 	_, pendingMigrations, err := findPendingMigrations(currentVersion, conf.GetMigrationDir())
