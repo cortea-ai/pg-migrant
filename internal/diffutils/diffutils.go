@@ -50,7 +50,7 @@ func PlanToPrettyS(plan diff.Plan) string {
 }
 
 func adaptStatement(stmt diff.Statement) diff.Statement {
-	for _, prefix := range []string{"CREATE INDEX", "CREATE UNIQUE INDEX"} {
+	for _, prefix := range []string{"CREATE INDEX", "CREATE UNIQUE INDEX", "DROP INDEX", "DROP UNIQUE INDEX"} {
 		concurrentPrefix := prefix + " CONCURRENTLY"
 		if strings.HasPrefix(stmt.DDL, concurrentPrefix) {
 			stmt.DDL = strings.Replace(stmt.DDL, concurrentPrefix, prefix, 1)
