@@ -59,7 +59,11 @@ func Squash(ctx context.Context, conf *config.Config, token string) error {
 		if file.IsDir() {
 			continue
 		}
-		if file.Name() > currentVersion {
+		version, err := VersionFromFilename(file.Name())
+		if err != nil {
+			return err
+		}
+		if version > currentVersion {
 			if firstFile == "" {
 				firstFile = file.Name()
 			}
