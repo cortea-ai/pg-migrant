@@ -136,7 +136,6 @@ func Diff(ctx context.Context, conf *config.Config, migrate bool) error {
 		if err := conn.ApplyMigration(ctx, newVersionStr, diffutils.PlanToPrettyS(plan)); err != nil {
 			return err
 		}
-		return nil
 	}
 
 	newFilePath := filepath.Join(conf.GetMigrationDir(), fmt.Sprintf("%s.sql", newVersionStr))
