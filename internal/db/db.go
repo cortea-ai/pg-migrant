@@ -23,6 +23,24 @@ type Conn struct {
 	*sql.DB
 }
 
+func NewConnEnsureVersionTable(ctx context.Context, url string) (*Conn, string, error) {
+	conn, err := NewConn(ctx, url)
+	if err != nil {
+		return nil, "", err
+	}
+	currentVersion, err := conn.CheckCurrentVersion(ctx)
+	if err != nil {
+		if errors.Is(err, ErrTableNotFound) {
+			if err = conn.CreateMigrationTable(ctx); err != nil {
+				return nil, "", err
+			}
+		} else {
+			return nil, "", err
+		}
+	}
+	return conn, currentVersion, nil
+}
+
 func NewConn(ctx context.Context, url string) (*Conn, error) {
 	connConfig, err := pgx.ParseConfig(url)
 	if err != nil {

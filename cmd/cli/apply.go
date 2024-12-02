@@ -10,21 +10,11 @@ import (
 )
 
 func Apply(ctx context.Context, conf *config.Config, autoApprove, dryRun bool) error {
-	conn, err := db.NewConn(ctx, conf.GetDBUrl())
+	conn, currentVersion, err := db.NewConnEnsureVersionTable(ctx, conf.GetDBUrl())
 	if err != nil {
 		return err
 	}
 	defer conn.Close(ctx)
-	currentVersion, err := conn.CheckCurrentVersion(ctx)
-	if err != nil {
-		if errors.Is(err, db.ErrTableNotFound) {
-			if err = conn.CreateMigrationTable(ctx); err != nil {
-				return err
-			}
-		} else {
-			return err
-		}
-	}
 	versions, migrations, err := findPendingMigrations(currentVersion, conf.GetMigrationDir())
 	if err != nil {
 		return err

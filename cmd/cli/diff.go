@@ -55,7 +55,7 @@ func Diff(ctx context.Context, conf *config.Config, migrate bool) error {
 		}
 	}()
 
-	conn, err := db.NewConn(ctx, conf.GetDBUrl())
+	conn, _, err := db.NewConnEnsureVersionTable(ctx, conf.GetDBUrl())
 	if err != nil {
 		return err
 	}
@@ -135,6 +135,9 @@ func Diff(ctx context.Context, conf *config.Config, migrate bool) error {
 		}
 		if err := conn.ApplyMigration(ctx, newVersionStr, diffutils.PlanToPrettyS(plan)); err != nil {
 			return err
+		}
+		if conf.GetMigrationDir() == "" {
+			return nil
 		}
 	}
 

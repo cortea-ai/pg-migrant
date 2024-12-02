@@ -2,7 +2,6 @@ package cli
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,21 +13,11 @@ import (
 )
 
 func PendingMigrations(ctx context.Context, conf *config.Config) error {
-	conn, err := db.NewConn(ctx, conf.GetDBUrl())
+	conn, currentVersion, err := db.NewConnEnsureVersionTable(ctx, conf.GetDBUrl())
 	if err != nil {
 		return err
 	}
 	defer conn.Close(ctx)
-	currentVersion, err := conn.CheckCurrentVersion(ctx)
-	if err != nil {
-		if errors.Is(err, db.ErrTableNotFound) {
-			if err = conn.CreateMigrationTable(ctx); err != nil {
-				return err
-			}
-		} else {
-			return err
-		}
-	}
 	versions, _, err := findPendingMigrations(currentVersion, conf.GetMigrationDir())
 	if err != nil {
 		return err
