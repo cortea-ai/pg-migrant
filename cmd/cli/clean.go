@@ -23,5 +23,6 @@ func Clean(ctx context.Context, conf *config.Config) error {
 	if err := conn.CleanSchema(ctx); err != nil {
 		return err
 	}
+	fmt.Printf("\n✅ Cleaned database schema\n")
 	return nil
 }
