@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 
 	"github.com/hashicorp/hcl/v2"
@@ -34,6 +35,7 @@ type Env struct {
 	SchemaFiles    []string     `hcl:"schema_files"`
 	GitHubConfig   GitHubConfig `hcl:"github_config,optional"`
 	ExcludeSchemas []string     `hcl:"exclude_schemas,optional"`
+	AllowDBClean   bool         `hcl:"allow_db_clean,optional"`
 }
 
 type Config struct {
@@ -149,6 +151,17 @@ func (conf *Config) GetMigrationDir() string {
 	return conf.SelectedEnv.MigrationDir
 }
 
+func (conf *Config) GetMigrationFiles() ([]fs.DirEntry, error) {
+	if conf.GetMigrationDir() == "" {
+		return nil, nil
+	}
+	files, err := os.ReadDir(conf.GetMigrationDir())
+	if err != nil {
+		return nil, fmt.Errorf("reading migration directory: %w", err)
+	}
+	return files, nil
+}
+
 func (conf *Config) GetSchemaFiles() []string {
 	return conf.SelectedEnv.SchemaFiles
 }
@@ -159,6 +172,10 @@ func (conf *Config) GetGitHubConfig() GitHubConfig {
 
 func (conf *Config) GetExcludeSchemas() []string {
 	return conf.SelectedEnv.ExcludeSchemas
+}
+
+func (conf *Config) GetAllowDBClean() bool {
+	return conf.SelectedEnv.AllowDBClean
 }
 
 var getEnvFunc = function.New(&function.Spec{

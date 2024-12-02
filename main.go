@@ -34,6 +34,7 @@ func init() {
 	rootCmd.AddCommand(pendingMigrationsCmd())
 	rootCmd.AddCommand(checkCmd())
 	rootCmd.AddCommand(squashCmd())
+	rootCmd.AddCommand(cleanCmd())
 }
 
 func main() {
@@ -185,6 +186,22 @@ func squashCmd() *cobra.Command {
 				return fmt.Errorf("GITHUB_TOKEN is not set")
 			}
 			return cli.Squash(cmd.Context(), conf, token)
+		},
+	}
+	addGlobalFlags(cmd.PersistentFlags())
+	return cmd
+}
+
+func cleanCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "clean",
+		Short: "Clean existing database schema. Requires `allow_db_clean=true`.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			conf, err := config.GetConfig(configPath, env, vars)
+			if err != nil {
+				return err
+			}
+			return cli.Clean(cmd.Context(), conf)
 		},
 	}
 	addGlobalFlags(cmd.PersistentFlags())

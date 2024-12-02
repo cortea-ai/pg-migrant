@@ -14,6 +14,7 @@ import (
 	"github.com/cortea-ai/pg-migrant/internal/config"
 	"github.com/cortea-ai/pg-migrant/internal/db"
 	"github.com/cortea-ai/pg-migrant/internal/diffutils"
+	"github.com/jackc/pgx/v4"
 	"github.com/stripe/pg-schema-diff/pkg/diff"
 	"github.com/stripe/pg-schema-diff/pkg/tempdb"
 )
@@ -30,14 +31,12 @@ func Diff(ctx context.Context, conf *config.Config, migrate bool) error {
 
 	tempDbFactory, err := tempdb.NewOnInstanceFactory(ctx,
 		func(ctx context.Context, dbName string) (*sql.DB, error) {
-			dbUrl := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?search_path=public&sslmode=disable",
-				dbConfig.User,
-				dbConfig.Password,
-				dbConfig.Host,
-				dbConfig.Port,
-				dbName, // we replace the db name
-			)
-			conn, err := db.NewConn(ctx, dbUrl)
+			connConf, err := pgx.ParseConfig(conf.GetDBUrl())
+			if err != nil {
+				return nil, fmt.Errorf("parsing database URL: %w", err)
+			}
+			connConf.Database = dbName
+			conn, err := db.NewConn(ctx, connConf.ConnString())
 			if err != nil {
 				return nil, err
 			}
@@ -81,7 +80,7 @@ func Diff(ctx context.Context, conf *config.Config, migrate bool) error {
 		return nil
 	}
 
-	files, err := os.ReadDir(conf.GetMigrationDir())
+	files, err := conf.GetMigrationFiles()
 	if err != nil {
 		return fmt.Errorf("reading migration directory: %w", err)
 	}

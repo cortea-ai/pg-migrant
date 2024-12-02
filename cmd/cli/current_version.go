@@ -13,6 +13,10 @@ func CurrentVersion(ctx context.Context, conf *config.Config) error {
 		return err
 	}
 	defer conn.Close(ctx)
-	println("Current version:", currentVersion)
+	if currentVersion != "" {
+		println("Current version:", currentVersion)
+	} else {
+		println("No migrations applied yet")
+	}
 	return nil
 }

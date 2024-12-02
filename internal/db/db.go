@@ -128,3 +128,19 @@ func (c *Conn) ApplyMigration(ctx context.Context, version, sql string) error {
 	fmt.Printf("\n✅ Finished executing statement. Duration: %s\n", time.Since(start))
 	return nil
 }
+
+func (c *Conn) CleanSchema(ctx context.Context) error {
+	if _, err := c.ExecContext(ctx, `DROP SCHEMA IF EXISTS `+PGMigrantSchema+` CASCADE;`); err != nil {
+		fmt.Printf("error cleaning pg-migrant schema: %v", err)
+		return err
+	}
+	if _, err := c.ExecContext(ctx, `DROP SCHEMA IF EXISTS public CASCADE;`); err != nil {
+		fmt.Printf("error cleaning public schema: %v", err)
+		return err
+	}
+	if _, err := c.ExecContext(ctx, `CREATE SCHEMA public;`); err != nil {
+		fmt.Printf("error creating public schema: %v", err)
+		return err
+	}
+	return nil
+}
