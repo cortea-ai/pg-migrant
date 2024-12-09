@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -30,14 +31,12 @@ func Diff(ctx context.Context, conf *config.Config, migrate bool) error {
 
 	tempDbFactory, err := tempdb.NewOnInstanceFactory(ctx,
 		func(ctx context.Context, dbName string) (*sql.DB, error) {
-			dbUrl := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?search_path=public&sslmode=disable",
-				dbConfig.User,
-				dbConfig.Password,
-				dbConfig.Host,
-				dbConfig.Port,
-				dbName, // we replace the db name
-			)
-			conn, err := db.NewConn(ctx, dbUrl)
+			connUrl, err := url.Parse(conf.GetDBUrl())
+			if err != nil {
+				return nil, fmt.Errorf("invalid connection string: %w", err)
+			}
+			connUrl.Path = "/" + dbName
+			conn, err := db.NewConn(ctx, connUrl.String())
 			if err != nil {
 				return nil, err
 			}
