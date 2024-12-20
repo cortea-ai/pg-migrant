@@ -16,10 +16,12 @@ import (
 const pgMigrant = "pg-migrant"
 
 var (
+	version string
 	rootCmd = &cobra.Command{
 		Use:          pgMigrant,
 		Short:        "A cli utility for db migrations",
 		SilenceUsage: true,
+		Version:      version,
 	}
 	configPath string
 	env        string
@@ -28,13 +30,15 @@ var (
 
 func init() {
 	rootCmd.SetOut(os.Stdout)
-	rootCmd.AddCommand(currentVersionCmd())
+	rootCmd.AddCommand(dbLastMigrationCmd())
+	rootCmd.AddCommand(repoLastMigrationCmd())
 	rootCmd.AddCommand(diffCmd())
 	rootCmd.AddCommand(applyCmd())
 	rootCmd.AddCommand(pendingMigrationsCmd())
 	rootCmd.AddCommand(checkCmd())
 	rootCmd.AddCommand(squashCmd())
 	rootCmd.AddCommand(cleanCmd())
+	rootCmd.AddCommand(Version())
 }
 
 func main() {
@@ -66,16 +70,36 @@ func addGlobalFlags(set *pflag.FlagSet) {
 	set.StringVarP(&configPath, "config", "c", "./"+pgMigrant+".hcl", "Path to the configuration file")
 }
 
-func currentVersionCmd() *cobra.Command {
+func dbLastMigrationCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "current-version",
-		Short: "Get the current migration version of the db",
+		Use:   "db-last-migration",
+		Short: "Get the last migration version of the db",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			conf, err := config.GetConfig(configPath, env, vars)
 			if err != nil {
 				return err
 			}
-			return cli.CurrentVersion(cmd.Context(), conf)
+			return cli.DBLastMigration(cmd.Context(), conf)
+		},
+	}
+	addGlobalFlags(cmd.PersistentFlags())
+	return cmd
+}
+
+func repoLastMigrationCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "repo-last-migration",
+		Short: "Get the last migration version commited to the repo. Requires GITHUB_TOKEN.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			conf, err := config.GetConfig(configPath, env, vars)
+			if err != nil {
+				return err
+			}
+			token, ok := os.LookupEnv("GITHUB_TOKEN")
+			if !ok {
+				return fmt.Errorf("GITHUB_TOKEN is not set")
+			}
+			return cli.RepoLastMigration(cmd.Context(), conf, token)
 		},
 	}
 	addGlobalFlags(cmd.PersistentFlags())
@@ -205,5 +229,16 @@ func cleanCmd() *cobra.Command {
 		},
 	}
 	addGlobalFlags(cmd.PersistentFlags())
+	return cmd
+}
+
+func Version() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "version",
+		Short: "Print the version number of pg-migrant",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Println("pg-migrant", version)
+		},
+	}
 	return cmd
 }
