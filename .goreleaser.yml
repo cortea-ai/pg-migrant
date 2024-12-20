@@ -15,7 +15,7 @@ builds:
     main: .
     binary: pg-migrant
     ldflags:
-      - -s -w -X main.version={{.Version}}
+      - -s -w -X main.version={{.Tag}}
 
 archives:
   - format: tar.gz
