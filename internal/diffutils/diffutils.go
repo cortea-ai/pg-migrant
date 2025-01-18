@@ -9,8 +9,6 @@ import (
 	"github.com/stripe/pg-schema-diff/pkg/diff"
 )
 
-const StatementEndMarker = "-- END STATEMENT --"
-
 func GetDDLsFromFiles(filePaths []string) ([]string, error) {
 	var ddls []string
 	for _, path := range filePaths {
@@ -43,7 +41,7 @@ func PlanToPrettyS(plan diff.Plan) string {
 		stmtStr := statementToPrettyS(stmt)
 		stmtStrs = append(stmtStrs, stmtStr)
 	}
-	sb.WriteString(strings.Join(stmtStrs, "\n"+StatementEndMarker+"\n\n"))
+	sb.WriteString(strings.Join(stmtStrs, "\n\n"))
 	sb.WriteString("\n")
 
 	return sb.String()

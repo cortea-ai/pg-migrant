@@ -5,10 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
-	"github.com/cortea-ai/pg-migrant/internal/diffutils"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/stdlib"
@@ -112,10 +110,8 @@ func (c *Conn) ApplyMigration(ctx context.Context, version, sql string) error {
 	if _, err := tx.ExecContext(ctx, fmt.Sprintf("SET SESSION lock_timeout = %d", defaultLockTimeout.Milliseconds())); err != nil {
 		return fmt.Errorf("setting lock timeout: %w", err)
 	}
-	for _, stmt := range strings.Split(sql, diffutils.StatementEndMarker) {
-		if _, err := tx.ExecContext(ctx, stmt); err != nil {
-			return fmt.Errorf("failed to execute migration: %w", err)
-		}
+	if _, err := tx.ExecContext(ctx, sql); err != nil {
+		return fmt.Errorf("failed to execute migration: %w", err)
 	}
 	if _, err = tx.ExecContext(ctx, `
 		INSERT INTO `+MigrationTableName+` (id, version) VALUES (1, $1)
