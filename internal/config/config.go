@@ -185,8 +185,21 @@ var getEnvFunc = function.New(&function.Spec{
 			Type: cty.String,
 		},
 	},
+	VarParam: &function.Parameter{
+		Name: "default",
+		Type: cty.String,
+	},
 	Type: function.StaticReturnType(cty.String),
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
-		return cty.StringVal(os.Getenv(args[0].AsString())), nil
+		envValue := os.Getenv(args[0].AsString())
+		if envValue != "" {
+			return cty.StringVal(envValue), nil
+		}
+
+		// Return default if provided, empty string otherwise
+		if len(args) > 1 && !args[1].IsNull() {
+			return args[1], nil
+		}
+		return cty.StringVal(""), nil
 	},
 })
